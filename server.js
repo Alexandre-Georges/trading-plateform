@@ -1,4 +1,4 @@
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 
 var express = require('express');
 var handlebars  = require('express-handlebars');
