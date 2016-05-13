@@ -1,0 +1,64 @@
+<html>
+	<head>
+		<title>Dashboard</title>
+		<link rel="stylesheet" href="style.css">
+		<script src="jquery-2.2.0.min.js"></script>
+	</head>
+	<body class="main">
+        <div class="cell">
+            <iframe id="economic-calendar" src="http://ec.forexprostools.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&category=_employment,_economicActivity,_inflation,_credit,_centralBanks,_confidenceIndex,_balance,_Bonds&importance=2,3&features=datepicker,timezone,timeselector,filters&countries=25,6,37,72,22,17,39,35,43,56,36,12,4,5&calType=day&timeZone=5&lang=1"></iframe>
+        </div>
+        <div class="cell">
+            <iframe id="currency-heat-map" src="http://widgets.myfxbook.com/widgets/heat-map.html?symbols=8,9,10,11,12,1,2,28,5,5779,33,3,2076,50,51&type=1"></iframe>
+        </div>
+        <div class="cell">
+            <script type="text/javascript" src="http://widgets.myfxbook.com/scripts/fxMarkets.js"></script>
+            <iframe frameborder="0" scrolling="no" height=50 width="474" allowtransparency="true" marginwidth="0" marginheight="0" src="http://irates.investing.com/index.php?rows=4&bg1=FFFFFF&bg2=F1F5F8&text_color=333333&enable_border=hide&border_color=0452A1&header_bg=000000&header_text=FFFFFF" align="center"></iframe>
+        </div>
+        <div class="cell">
+            <form id="token-form">
+                <input id="token-input" type="text" placeholder="Token" /><button id="token-submit" class="blue">Submit</button>
+            </form>
+            <div id="news">
+
+            </div>
+        </div>
+	</body>
+
+	<script type="text/javascript">
+
+        $('#token-form').on('submit', function (event) {
+            event.preventDefault();
+            localStorage.setItem('token', $('#token-input').val());
+            initNews();
+        });
+
+        function initNews() {
+
+            var token = localStorage.getItem('token');
+
+            if (token) {
+
+                var content = null;
+
+                $.ajax({
+                    url: '/news?token=' + localStorage.getItem('token')
+                }).done(function(message) {
+                    content = message;
+                    $('#token-form').hide();
+                }).fail(function(xhr, textStatus) {
+                    if (xhr.status === 401) {
+                        $('#token-form').show();
+                    } else {
+                        content = 'An error happened ' + xhr.status + ' ' + textStatus;
+                    }
+                }).always(function() {
+                    $('#news').html(content);
+                });
+            } else {
+                $('#token-form').show();
+            }
+        }
+        initNews();
+	</script>
+</html>

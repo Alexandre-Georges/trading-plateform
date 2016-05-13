@@ -1,0 +1,118 @@
+html, body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	width: 100%;
+	background-color: beige;
+}
+
+.cell:nth-child(-n+2) iframe {
+	width: 100%;
+	height: 100%;
+}
+
+.cell:nth-child(3) iframe {
+	float: left;
+}
+
+.cell:nth-child(-n+2) {
+	height: 440px;
+}
+
+.cell {
+	width: 50%;
+	float: left;
+	margin-bottom: 5px;
+}
+
+button {
+	display: inline-block;
+	padding: 6px 12px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.42857143;
+	text-align: center;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #fff;
+}
+
+button.blue {
+	background-color: #337ab7;
+}
+
+button.green {
+	background-color: #5cb85c;;
+}
+
+button.yellow {
+	background-color: #f0ad4e;
+}
+
+input {
+	display: inline-block;
+	height: 34px;
+	padding: 6px 12px;
+	font-size: 14px;
+	line-height: 1.42857143;
+	color: #555;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+
+#news {
+	margin: 10px;
+}
+
+#news span {
+	display: inline-block;
+}
+
+#news .header {
+	width: 100%;
+	line-height: 3em;
+}
+
+#news .header span:first-child {
+	font-weight: bold;
+}
+
+#news .header span:nth-child(2) {
+	float: right;
+}
+
+#news .header span:nth-child(2) button:not(:first-child) {
+	margin-left: 10px;
+}
+
+#news a {
+	display: block;
+	color: black;
+	line-height: 1.2em;
+}
+
+#news a:hover {
+	font-weight: bold;
+	background-color: beige;
+}
+
+#news a span:first-child {
+	width: 90%;
+}
+
+#news a span:last-child {
+	width: 10%;
+	text-align: right;
+}
+
+#token-form {
+	display: none;
+}
+
+#token-form input {
+	width: 50%;
+	margin-right: 2em;
+}

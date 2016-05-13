@@ -1,0 +1,63 @@
+<span class="header">
+    <span>{{unreadCount}} unread</span>
+    <span>
+        {{#if showUndoButton}}
+            <button id="undo-button" class="yellow">Undo</button>
+        {{/if}}
+        <button id="refresh-button" class="green">Refresh</button>
+        <button id="mark-as-read-button" class="blue">Read</button>
+    </span>
+</span>
+{{#each news}}
+    <a href="{{this.href}}" news-id="{{this.id}}" target="_blank"><span>{{this.title}}</span><span>{{this.time}}</span></a>
+{{/each}}
+
+<script type="text/javascript">
+    $('#refresh-button').on('click', function () {
+        var content = null;
+        $.ajax({
+            url: '/news?token=' + localStorage.getItem('token')
+        }).done(function(message) {
+            content = message;
+        }).fail(function(xhr, textStatus) {
+            content = 'An error happened ' + xhr.status + ' ' + textStatus;
+        }).always(function() {
+            $('#news').html(content);
+        });
+    });
+    $('#mark-as-read-button').on('click', function () {
+        var newsIds = [];
+        $.each($('#news a'), function (index, element) {
+            newsIds.push($(element).attr('news-id'));
+        });
+        var content = null;
+        $.ajax({
+            url: '/news?token=' + localStorage.getItem('token'),
+            method: 'DELETE',
+            data: JSON.stringify(newsIds)
+        }).done(function(message) {
+            content = message;
+            localStorage.setItem('latest-ids', JSON.stringify(newsIds));
+        }).fail(function(xhr, textStatus) {
+            content = 'An error happened ' + xhr.status + ' ' + textStatus;
+        }).always(function() {
+            $('#news').html(content);
+        });
+    });
+    $('#undo-button').on('click', function () {
+        var newsIds = localStorage.getItem('latest-ids');
+        var content = null;
+        $.ajax({
+            url: '/news?token=' + localStorage.getItem('token'),
+            method: 'PUT',
+            data: newsIds
+        }).done(function(message) {
+            content = message;
+            localStorage.removeItem('latest-ids');
+        }).fail(function(xhr, textStatus) {
+            content = 'An error happened ' + xhr.status + ' ' + textStatus;
+        }).always(function() {
+            $('#news').html(content);
+        });
+    });
+</script>
