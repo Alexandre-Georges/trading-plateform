@@ -1,6 +1,5 @@
 var newsService = require('./newsService.js');
 var moment = require('moment');
-var promise = require('promise');
 
 var httpUtilsService = {
     processError (response, statusCode, errorMessage) {
@@ -29,7 +28,7 @@ var httpUtilsService = {
                 var unreadCountPromise = newsService.getUnreadCount(token);
                 var newsPromise = newsService.getNews(token);
 
-                promise.all([ unreadCountPromise, newsPromise ]).then(([ unreadCountData, newsData ]) => {
+                Promise.all([ unreadCountPromise, newsPromise ]).then(([ unreadCountData, newsData ]) => {
 
                     var news = [];
                     var currentDate = moment();

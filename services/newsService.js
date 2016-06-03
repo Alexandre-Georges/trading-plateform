@@ -1,5 +1,4 @@
 var https = require('https');
-var promise = require('promise');
 
 var newsService = {
     URL: 'cloud.feedly.com',
