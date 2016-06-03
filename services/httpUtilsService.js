@@ -1,6 +1,5 @@
 var newsService = require('./newsService.js');
 var moment = require('moment');
-var _ = require('underscore');
 var promise = require('promise');
 
 var httpUtilsService = {
@@ -34,14 +33,14 @@ var httpUtilsService = {
 
                     var news = [];
                     var currentDate = moment();
-                    _.each(newsData.items, ({ id, title, alternate, published }) => {
+                    for(let { id, title, alternate, published } of newsData.items) {
                         news.push({
                             id: id,
                             title: title,
                             href: alternate[0].href,
                             time: httpUtilsService.getDifference(currentDate, moment(published))
                         });
-                    });
+                    }
                     callback({
                         unreadCount: unreadCountData.unreadcounts[0].count,
                         news: news
