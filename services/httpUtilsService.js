@@ -9,7 +9,7 @@ var httpUtilsService = {
         response.end(JSON.stringify(errorMessage));
     },
     getData: function (request) {
-        return new Promise(function (callback, errorCallback) {
+        return new Promise((callback, errorCallback) => {
             try {
                 var payload = '';
 
@@ -25,18 +25,18 @@ var httpUtilsService = {
         });
     },
     getNews: function (token) {
-        return new Promise(function (callback, errorCallback) {
+        return new Promise((callback, errorCallback) => {
             try {
                 var unreadCountPromise = newsService.getUnreadCount(token);
                 var newsPromise = newsService.getNews(token);
 
-                promise.all([ unreadCountPromise, newsPromise ]).then(function (data) {
+                promise.all([ unreadCountPromise, newsPromise ]).then(data => {
                     var unreadCountData = data[0];
                     var newsData = data[1];
 
                     var news = [];
                     var currentDate = moment();
-                    _.each(newsData.items, function (item) {
+                    _.each(newsData.items, item => {
                         news.push({
                             id: item.id,
                             title: item.title,
@@ -48,7 +48,7 @@ var httpUtilsService = {
                         unreadCount: unreadCountData.unreadcounts[0].count,
                         news: news
                     });
-                }).catch(function (error) {
+                }).catch(error => {
                     errorCallback(error);
                 });
 

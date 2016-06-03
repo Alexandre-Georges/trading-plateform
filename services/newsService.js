@@ -12,7 +12,7 @@ var newsService = {
         }
     },
     getNews: function (token) {
-        return new Promise(function (callback, errorCallback) {
+        return new Promise((callback, errorCallback) => {
             try {
                 https.get(
                     {
@@ -44,7 +44,7 @@ var newsService = {
         });
     },
     getUnreadCount: function (token) {
-        return new Promise(function (callback, errorCallback) {
+        return new Promise((callback, errorCallback) => {
             try {
                 https.get(
                     {
@@ -76,7 +76,7 @@ var newsService = {
         });
     },
     readEntries: function (token, ids) {
-        return new Promise(function (callback, errorCallback) {
+        return new Promise((callback, errorCallback) => {
             try {
                 var request = https.request(
                     {
@@ -115,7 +115,7 @@ var newsService = {
         });
     },
     unreadEntries: function (token, ids) {
-        return new Promise(function (callback, errorCallback) {
+        return new Promise((callback, errorCallback) => {
             try {
                 var request = https.request(
                     {

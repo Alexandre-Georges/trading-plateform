@@ -18,45 +18,45 @@ server.get('/', (request, response) => {
 });
 
 server.get('/news', (request, response) => {
-    httpUtilsService.getNews(request.query.token).then(function (data) {
+    httpUtilsService.getNews(request.query.token).then(data => {
         response.render('news', { unreadCount: data.unreadCount, news: data.news });
-    }).catch(function () {
+    }).catch(error => {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
 
 server.delete('/news', (request, response) => {
-    httpUtilsService.getData(request).then(function (data) {
-        newsService.readEntries(request.query.token, data).then (function () {
-            httpUtilsService.getNews(request.query.token).then(function (data) {
+    httpUtilsService.getData(request).then(data => {
+        newsService.readEntries(request.query.token, data).then (() => {
+            httpUtilsService.getNews(request.query.token).then(data => {
                 response.render('news', { unreadCount: data.unreadCount, news: data.news, showUndoButton: true });
-            }, function (error) {
+            }).catch(error => {
                 httpUtilsService.processError(response, error.statusCode, error.errorMessage);
             });
-        }, function (error) {
+        }).catch(error => {
             httpUtilsService.processError(response, error.statusCode, error.errorMessage);
         });
-    }).catch(function (error) {
+    }).catch(error => {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
 
 server.put('/news', (request, response) => {
-    httpUtilsService.getData(request).then(function (data) {
-        newsService.unreadEntries(request.query.token, data).then(function () {
-            httpUtilsService.getNews(request.query.token).then(function (data) {
+    httpUtilsService.getData(request).then(data => {
+        newsService.unreadEntries(request.query.token, data).then(() => {
+            httpUtilsService.getNews(request.query.token).then(data => {
                 response.render('news', { unreadCount: data.unreadCount, news: data.news });
-            }, function (error) {
+            }).catch(error => {
                 httpUtilsService.processError(response, error.statusCode, error.errorMessage);
             });
-        }, function (error) {
+        }).catch(error => {
             httpUtilsService.processError(response, error.statusCode, error.errorMessage);
         });
-    }).catch(function (error) {
+    }).catch(error => {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
 
-server.listen(PORT, function () {
+server.listen(PORT, () => {
     console.log('Server up');
 });
