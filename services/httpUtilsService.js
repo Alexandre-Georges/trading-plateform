@@ -1,48 +1,60 @@
 var newsService = require('./newsService.js');
 var moment = require('moment');
 var _ = require('underscore');
+var promise = require('promise');
 
 var httpUtilsService = {
     processError: function (response, statusCode, errorMessage) {
         response.writeHead(statusCode);
         response.end(JSON.stringify(errorMessage));
     },
-    getData: function (request, callback) {
-        var payload = '';
+    getData: function (request) {
+        return new Promise(function (callback, errorCallback) {
+            try {
+                var payload = '';
 
-        request.on('data', (data) => {
-            payload += data;
-        });
-        request.on('end', () => {
-            callback(JSON.parse(payload));
+                request.on('data', (data) => {
+                    payload += data;
+                });
+                request.on('end', () => {
+                    callback(JSON.parse(payload));
+                });
+            } catch (exception) {
+                errorCallback({ statusCode: 503, errorMessage: exception });
+            }
         });
     },
-    getNews: function (token, callback) {
-        newsService.getUnreadCount(token, function (error, unreadCountData) {
-            if (error) {
-                callback(error);
-                return;
-            }
-            newsService.getNews(token, function (error, newsData) {
-                if (error) {
-                    callback(error);
-                    return;
-                }
-                var news = [];
-                var currentDate = moment();
-                _.each(newsData.items, function (item) {
-                    news.push({
-                        id: item.id,
-                        title: item.title,
-                        href: item.alternate[0].href,
-                        time: httpUtilsService.getDifference(currentDate, moment(item.published))
+    getNews: function (token) {
+        return new Promise(function (callback, errorCallback) {
+            try {
+                var unreadCountPromise = newsService.getUnreadCount(token);
+                var newsPromise = newsService.getNews(token);
+
+                promise.all([ unreadCountPromise, newsPromise ]).then(function (data) {
+                    var unreadCountData = data[0];
+                    var newsData = data[1];
+
+                    var news = [];
+                    var currentDate = moment();
+                    _.each(newsData.items, function (item) {
+                        news.push({
+                            id: item.id,
+                            title: item.title,
+                            href: item.alternate[0].href,
+                            time: httpUtilsService.getDifference(currentDate, moment(item.published))
+                        });
                     });
+                    callback({
+                        unreadCount: unreadCountData.unreadcounts[0].count,
+                        news: news
+                    });
+                }, function (error) {
+                    errorCallback(error);
                 });
-                callback(null, {
-                    unreadCount: unreadCountData.unreadcounts[0].count,
-                    news: news
-                });
-            });
+
+            } catch (exception) {
+                errorCallback({ statusCode: 503, errorMessage: exception });
+            }
         });
     },
     getDifference: function (currentDate, newsDate) {

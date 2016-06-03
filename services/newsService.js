@@ -1,4 +1,5 @@
 var https = require('https');
+var promise = require('promise');
 
 var newsService = {
     URL: 'cloud.feedly.com',
@@ -10,123 +11,148 @@ var newsService = {
             'Authorization': 'OAuth ' + token
         }
     },
-    getNews: function (token, callback) {
-        https.get(
-            {
-                hostname: newsService.URL,
-                path: newsService.BASE_PATH + '/streams/' + newsService.STREAM + '/contents?unreadOnly=true&ranked=newest&count=' + newsService.NEWS_NUMBER,
-                headers: newsService.getHeaders(token)
-            }, (response) => {
-            
-                var allData = '';
+    getNews: function (token) {
+        return new Promise(function (callback, errorCallback) {
+            try {
+                https.get(
+                    {
+                        hostname: newsService.URL,
+                        path: newsService.BASE_PATH + '/streams/' + newsService.STREAM + '/contents?unreadOnly=true&ranked=newest&count=' + newsService.NEWS_NUMBER,
+                        headers: newsService.getHeaders(token)
+                    }, (response) => {
 
-                response.on('data', (data) => {
-                    allData += data;
-                });
-                response.on('end', () => {
-                    var responseData = JSON.parse(allData);
-                    if (response.statusCode !== 200) {
-                        callback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
-                        return;
-                    }
-                    callback(null, responseData);
-                });
+                        var allData = '';
 
-        }).on('error', (error) => {
-            callback({ statusCode: 503, errorMessage: error });
+                        response.on('data', (data) => {
+                            allData += data;
+                        });
+                        response.on('end', () => {
+                            var responseData = JSON.parse(allData);
+                            if (response.statusCode !== 200) {
+                                errorCallback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
+                                return;
+                            }
+                            callback(responseData);
+                        });
+
+                }).on('error', (error) => {
+                    errorCallback({ statusCode: 503, errorMessage: error });
+                });
+            } catch (exception) {
+                errorCallback({ statusCode: 503, errorMessage: exception });
+            }
         });
     },
-    getUnreadCount: function (token, callback) {
-        https.get(
-            {
-                hostname: newsService.URL,
-                path: newsService.BASE_PATH + '/markers/counts?streamId=' + newsService.STREAM,
-                headers: newsService.getHeaders(token)
-            }, (response) => {
-            
-                var allData = '';
+    getUnreadCount: function (token) {
+        return new Promise(function (callback, errorCallback) {
+            try {
+                https.get(
+                    {
+                        hostname: newsService.URL,
+                        path: newsService.BASE_PATH + '/markers/counts?streamId=' + newsService.STREAM,
+                        headers: newsService.getHeaders(token)
+                    }, (response) => {
 
-                response.on('data', (data) => {
-                    allData += data;
-                });
-                response.on('end', () => {
-                    var responseData = JSON.parse(allData);
-                    if (response.statusCode !== 200) {
-                        callback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
-                        return;
-                    }
-                    callback(null, responseData);
-                });
+                    var allData = '';
 
-        }).on('error', (error) => {
-            callback({ statusCode: 503, errorMessage: error });
-        });
-    },
-    readEntries: function (token, ids, callback) {
-        var request = https.request(
-            {
-                method: 'POST',
-                hostname: newsService.URL,
-                path: newsService.BASE_PATH + '/markers',
-                headers: newsService.getHeaders(token)
-            }, (response) => {
-
-                var allData = '';
-
-                response.on('data', (data) => {
-                    allData += data;
-                });
-                response.on('end', () => {
-                    if (response.statusCode !== 200) {
+                    response.on('data', (data) => {
+                        allData += data;
+                    });
+                    response.on('end', () => {
                         var responseData = JSON.parse(allData);
-                        callback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
-                        return;
-                    }
-                    callback(null);
-                });
+                        if (response.statusCode !== 200) {
+                            errorCallback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
+                            return;
+                        }
+                        callback(responseData);
+                    });
 
-        }).on('error', (error) => {
-            callback({ statusCode: 503, errorMessage: error });
+                }).on('error', (error) => {
+                    errorCallback({ statusCode: 503, errorMessage: error });
+                });
+            } catch (exception) {
+                errorCallback({ statusCode: 503, errorMessage: exception });
+            }
         });
-        request.write(JSON.stringify({
-            entryIds: ids,
-            action: 'markAsRead',
-            type: 'entries'
-        }));
-        request.end();
     },
-    unreadEntries: function (token, ids, callback) {
-        var request = https.request(
-            {
-                method: 'POST',
-                hostname: newsService.URL,
-                path: newsService.BASE_PATH + '/markers',
-                headers: newsService.getHeaders(token)
-            }, (response) => {
-
-                var allData = '';
-
-                response.on('data', (data) => {
-                    allData += data;
+    readEntries: function (token, ids) {
+        return new Promise(function (callback, errorCallback) {
+            try {
+                var request = https.request(
+                    {
+                        method: 'POST',
+                        hostname: newsService.URL,
+                        path: newsService.BASE_PATH + '/markers',
+                        headers: newsService.getHeaders(token)
+                    }, (response) => {
+        
+                        var allData = '';
+        
+                        response.on('data', (data) => {
+                            allData += data;
+                        });
+                        response.on('end', () => {
+                            if (response.statusCode !== 200) {
+                                var responseData = JSON.parse(allData);
+                                errorCallback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
+                                return;
+                            }
+                            callback();
+                        });
+        
+                }).on('error', (error) => {
+                    errorCallback({ statusCode: 503, errorMessage: error });
                 });
-                response.on('end', () => {
-                    if (response.statusCode !== 200) {
-                        var responseData = JSON.parse(allData);
-                        callback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
-                        return;
-                    }
-                    callback(null);
-                });
-
-        }).on('error', (error) => {
-            callback({ statusCode: 503, errorMessage: error });
+                request.write(JSON.stringify({
+                    entryIds: ids,
+                    action: 'markAsRead',
+                    type: 'entries'
+                }));
+                request.end();
+            } catch (exception) {
+                errorCallback({ statusCode: 503, errorMessage: exception });
+            }
         });
-        request.write(JSON.stringify({
-            entryIds: ids,
-            action: 'keepUnread',
-            type: 'entries'
-        }));
-        request.end();
+    },
+    unreadEntries: function (token, ids) {
+        return new Promise(function (callback, errorCallback) {
+            try {
+                var request = https.request(
+                    {
+                        method: 'POST',
+                        hostname: newsService.URL,
+                        path: newsService.BASE_PATH + '/markers',
+                        headers: newsService.getHeaders(token)
+                    }, (response) => {
+
+                        var allData = '';
+
+                        response.on('data', (data) => {
+                            allData += data;
+                        });
+                        response.on('end', () => {
+                            if (response.statusCode !== 200) {
+                                var responseData = JSON.parse(allData);
+                                errorCallback({ statusCode: response.statusCode, errorMessage: responseData.errorMessage });
+                                return;
+                            }
+                            callback();
+                        });
+
+                }).on('error', (error) => {
+                    errorCallback({ statusCode: 503, errorMessage: error });
+                });
+                request.write(JSON.stringify({
+                    entryIds: ids,
+                    action: 'keepUnread',
+                    type: 'entries'
+                }));
+                request.end();
+
+            } catch (exception) {
+                errorCallback({ statusCode: 503, errorMessage: exception });
+            }
+        });
     }
 };
 module.exports = newsService;
