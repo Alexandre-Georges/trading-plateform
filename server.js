@@ -20,8 +20,8 @@ server.get('/', (request, response) => {
 server.get('/news', (request, response) => {
     httpUtilsService.getNews(request.query.token).then(data => {
         response.render('news', { unreadCount: data.unreadCount, news: data.news });
-    }).catch(error => {
-        httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+    }).catch(({ statusCode, errorMessage }) => {
+        httpUtilsService.processError(response, statusCode, errorMessage);
     });
 });
 
@@ -30,14 +30,14 @@ server.delete('/news', (request, response) => {
         newsService.readEntries(request.query.token, data).then (() => {
             httpUtilsService.getNews(request.query.token).then(data => {
                 response.render('news', { unreadCount: data.unreadCount, news: data.news, showUndoButton: true });
-            }).catch(error => {
-                httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+            }).catch(({ statusCode, errorMessage }) => {
+                httpUtilsService.processError(response, statusCode, errorMessage);
             });
-        }).catch(error => {
-            httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+        }).catch(({ statusCode, errorMessage }) => {
+            httpUtilsService.processError(response, statusCode, errorMessage);
         });
-    }).catch(error => {
-        httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+    }).catch(({ statusCode, errorMessage }) => {
+        httpUtilsService.processError(response, statusCode, errorMessage);
     });
 });
 
@@ -46,14 +46,14 @@ server.put('/news', (request, response) => {
         newsService.unreadEntries(request.query.token, data).then(() => {
             httpUtilsService.getNews(request.query.token).then(data => {
                 response.render('news', { unreadCount: data.unreadCount, news: data.news });
-            }).catch(error => {
-                httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+            }).catch(({ statusCode, errorMessage }) => {
+                httpUtilsService.processError(response, statusCode, errorMessage);
             });
-        }).catch(error => {
-            httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+        }).catch(({ statusCode, errorMessage }) => {
+            httpUtilsService.processError(response, statusCode, errorMessage);
         });
-    }).catch(error => {
-        httpUtilsService.processError(response, error.statusCode, error.errorMessage);
+    }).catch(({ statusCode, errorMessage }) => {
+        httpUtilsService.processError(response, statusCode, errorMessage);
     });
 });
 

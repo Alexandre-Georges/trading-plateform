@@ -30,18 +30,16 @@ var httpUtilsService = {
                 var unreadCountPromise = newsService.getUnreadCount(token);
                 var newsPromise = newsService.getNews(token);
 
-                promise.all([ unreadCountPromise, newsPromise ]).then(data => {
-                    var unreadCountData = data[0];
-                    var newsData = data[1];
+                promise.all([ unreadCountPromise, newsPromise ]).then(([ unreadCountData, newsData ]) => {
 
                     var news = [];
                     var currentDate = moment();
-                    _.each(newsData.items, item => {
+                    _.each(newsData.items, ({ id, title, alternate, published }) => {
                         news.push({
-                            id: item.id,
-                            title: item.title,
-                            href: item.alternate[0].href,
-                            time: httpUtilsService.getDifference(currentDate, moment(item.published))
+                            id: id,
+                            title: title,
+                            href: alternate[0].href,
+                            time: httpUtilsService.getDifference(currentDate, moment(published))
                         });
                     });
                     callback({
