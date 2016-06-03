@@ -6,12 +6,12 @@ var newsService = {
     BASE_PATH: '/v3',
     STREAM: 'user%2F7be76130-1791-4670-befa-9aabdc9a4837%2Fcategory%2Ffinance',
     NEWS_NUMBER: 20,
-    getHeaders: function (token) {
+    getHeaders (token) {
         return {
             'Authorization': 'OAuth ' + token
         }
     },
-    getNews: function (token) {
+    getNews (token) {
         return new Promise((callback, errorCallback) => {
             try {
                 https.get(
@@ -43,7 +43,7 @@ var newsService = {
             }
         });
     },
-    getUnreadCount: function (token) {
+    getUnreadCount (token) {
         return new Promise((callback, errorCallback) => {
             try {
                 https.get(
@@ -75,7 +75,7 @@ var newsService = {
             }
         });
     },
-    readEntries: function (token, ids) {
+    readEntries (token, ids) {
         return new Promise((callback, errorCallback) => {
             try {
                 var request = https.request(
@@ -114,7 +114,7 @@ var newsService = {
             }
         });
     },
-    unreadEntries: function (token, ids) {
+    unreadEntries (token, ids) {
         return new Promise((callback, errorCallback) => {
             try {
                 var request = https.request(

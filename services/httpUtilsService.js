@@ -4,11 +4,11 @@ var _ = require('underscore');
 var promise = require('promise');
 
 var httpUtilsService = {
-    processError: function (response, statusCode, errorMessage) {
+    processError (response, statusCode, errorMessage) {
         response.writeHead(statusCode);
         response.end(JSON.stringify(errorMessage));
     },
-    getData: function (request) {
+    getData (request) {
         return new Promise((callback, errorCallback) => {
             try {
                 var payload = '';
@@ -24,7 +24,7 @@ var httpUtilsService = {
             }
         });
     },
-    getNews: function (token) {
+    getNews (token) {
         return new Promise((callback, errorCallback) => {
             try {
                 var unreadCountPromise = newsService.getUnreadCount(token);
@@ -57,7 +57,7 @@ var httpUtilsService = {
             }
         });
     },
-    getDifference: function (currentDate, newsDate) {
+    getDifference (currentDate, newsDate) {
         var monthDifference = currentDate.diff(newsDate, 'month');
         if (monthDifference >= 1) {
             return monthDifference + ' m';
