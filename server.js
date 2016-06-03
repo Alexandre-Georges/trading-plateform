@@ -20,7 +20,7 @@ server.get('/', (request, response) => {
 server.get('/news', (request, response) => {
     httpUtilsService.getNews(request.query.token).then(function (data) {
         response.render('news', { unreadCount: data.unreadCount, news: data.news });
-    }, function (error) {
+    }).catch(function () {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
@@ -36,7 +36,7 @@ server.delete('/news', (request, response) => {
         }, function (error) {
             httpUtilsService.processError(response, error.statusCode, error.errorMessage);
         });
-    }, function (error) {
+    }.catch(function (error) {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
@@ -52,7 +52,7 @@ server.put('/news', (request, response) => {
         }, function (error) {
             httpUtilsService.processError(response, error.statusCode, error.errorMessage);
         });
-    }, function (error) {
+    }.catch(function (error) {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });

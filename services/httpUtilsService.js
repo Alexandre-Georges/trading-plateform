@@ -48,7 +48,7 @@ var httpUtilsService = {
                         unreadCount: unreadCountData.unreadcounts[0].count,
                         news: news
                     });
-                }, function (error) {
+                }).catch(function (error) {
                     errorCallback(error);
                 });
 
