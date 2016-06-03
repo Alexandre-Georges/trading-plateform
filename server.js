@@ -36,7 +36,7 @@ server.delete('/news', (request, response) => {
         }, function (error) {
             httpUtilsService.processError(response, error.statusCode, error.errorMessage);
         });
-    }.catch(function (error) {
+    }).catch(function (error) {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
@@ -52,7 +52,7 @@ server.put('/news', (request, response) => {
         }, function (error) {
             httpUtilsService.processError(response, error.statusCode, error.errorMessage);
         });
-    }.catch(function (error) {
+    }).catch(function (error) {
         httpUtilsService.processError(response, error.statusCode, error.errorMessage);
     });
 });
