@@ -5,6 +5,7 @@ var handlebars  = require('express-handlebars');
 var url = require('url');
 
 var newsService = require('./services/newsService.js');
+var financeService = require('./services/financeService.js');
 var httpUtilsService = require('./services/httpUtilsService.js');
 
 var server = express();
@@ -12,9 +13,28 @@ var server = express();
 server.engine('handlebars', handlebars());
 server.set('view engine', 'handlebars');
 server.use(express.static('public'));
+server.use(express.static('node_modules/d3fc/dist'));
+server.use(express.static('node_modules/moment'));
 
 server.get('/', (request, response) => {
     response.render('trading');
+});
+
+server.get('/finance', (request, response) => {
+    financeService.getData().then(data => {
+        var dailyData = financeService.formatData(data);
+        var weeklyData = financeService.toWeeklyData(dailyData);
+
+        var dailyWithIndicators = financeService.addIndicators(dailyData);
+        var weeklyWithIndicators = financeService.addIndicators(weeklyData);
+
+        response.render('finance', {
+            dailyDataString: JSON.stringify(dailyWithIndicators),
+            weeklyDataString: JSON.stringify(weeklyWithIndicators)
+        });
+    }).catch(({ statusCode, errorMessage }) => {
+        httpUtilsService.processError(response, statusCode, errorMessage);
+    });
 });
 
 server.get('/news', (request, response) => {

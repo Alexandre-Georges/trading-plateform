@@ -116,3 +116,11 @@ input {
 	width: 50%;
 	margin-right: 2em;
 }
+
+g.axis:not(:first-child) g.tick line, g.axis:not(:first-child) path.domain { display: none; }
+
+.main .envelope .area {
+	fill-opacity: 0.2;
+}
+
+g.label g.container { fill: #96d9ff; stroke: #1d648d; }
