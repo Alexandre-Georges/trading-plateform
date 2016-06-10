@@ -45,10 +45,22 @@ var financeService = {
             + '&' + financeService.CALLBACK_PARAM;
     },
     formatData (data) {
+
         var self = this;
         var formattedData = [];
+        var currentSymbolData = null;
+
         for(let result of data.query.results.quote) {
-            formattedData.push({
+
+            if (!currentSymbolData || currentSymbolData.symbol !== result.Symbol) {
+                currentSymbolData = {
+                    symbol: result.Symbol,
+                    data: []
+                };
+                formattedData.push(currentSymbolData);
+            }
+
+            currentSymbolData.data.push({
                 date: moment(result.Date, self.DATE_FORMAT).toISOString(),
                 open: parseFloat(result.Open),
                 close: parseFloat(result.Close),
@@ -60,56 +72,65 @@ var financeService = {
         return formattedData;
     },
     toWeeklyData (data) {
+
         var weeklyData = [];
 
-        var currentWeekNumber = -1;
-        var currentWeekDate = null;
-        var currentWeekOpen = -1;
-        var currentWeekHigh = -1;
-        var currentWeekLow = -1;
-        var currentWeekVolume = -1;
+        for (let dailySymbolData of data) {
 
-        var previousDataPoint = null;
-        for (let dataPoint of data) {
-            var dataWeekNumber = moment(dataPoint.date).week();
-            if (currentWeekNumber !== dataWeekNumber) {
-                if (previousDataPoint) {
-                    weeklyData.push({
-                        date: currentWeekDate,
-                        open: currentWeekOpen,
-                        close: previousDataPoint.close,
-                        high: currentWeekHigh,
-                        low: currentWeekLow,
-                        volume: currentWeekVolume
-                    });
-                }
+            var weeklySymbolData = {
+                symbol: dailySymbolData.symbol,
+                data: []
+            };
+            weeklyData.push(weeklySymbolData);
 
-                currentWeekNumber = dataWeekNumber;
-                currentWeekDate = dataPoint.date;
-                currentWeekOpen = dataPoint.open;
-                currentWeekHigh = dataPoint.high;
-                currentWeekLow = dataPoint.low;
-                currentWeekVolume = dataPoint.volume;
-            } else {
-                if (currentWeekHigh < dataPoint.high) {
+            var currentWeekNumber = -1;
+            var currentWeekDate = null;
+            var currentWeekOpen = -1;
+            var currentWeekHigh = -1;
+            var currentWeekLow = -1;
+            var currentWeekVolume = -1;
+
+            var previousDataPoint = null;
+            for (let dataPoint of dailySymbolData.data) {
+                var dataWeekNumber = moment(dataPoint.date).week();
+                if (currentWeekNumber !== dataWeekNumber) {
+                    if (previousDataPoint) {
+                        weeklySymbolData.data.push({
+                            date: currentWeekDate,
+                            open: currentWeekOpen,
+                            close: previousDataPoint.close,
+                            high: currentWeekHigh,
+                            low: currentWeekLow,
+                            volume: currentWeekVolume
+                        });
+                    }
+
+                    currentWeekNumber = dataWeekNumber;
+                    currentWeekDate = dataPoint.date;
+                    currentWeekOpen = dataPoint.open;
                     currentWeekHigh = dataPoint.high;
-                }
-                if (currentWeekLow > dataPoint.low) {
                     currentWeekLow = dataPoint.low;
+                    currentWeekVolume = dataPoint.volume;
+                } else {
+                    if (currentWeekHigh < dataPoint.high) {
+                        currentWeekHigh = dataPoint.high;
+                    }
+                    if (currentWeekLow > dataPoint.low) {
+                        currentWeekLow = dataPoint.low;
+                    }
+                    currentWeekVolume += dataPoint.volume;
                 }
-                currentWeekVolume += dataPoint.volume;
+                previousDataPoint = dataPoint;
             }
-            previousDataPoint = dataPoint;
+            weeklySymbolData.data.push({
+                date: currentWeekDate,
+                open: currentWeekOpen,
+                close: previousDataPoint.close,
+                high: currentWeekHigh,
+                low: currentWeekLow,
+                volume: currentWeekVolume
+            });
         }
-        weeklyData.push({
-            date: currentWeekDate,
-            open: currentWeekOpen,
-            close: previousDataPoint.close,
-            high: currentWeekHigh,
-            low: currentWeekLow,
-            volume: currentWeekVolume
-        });
-
         return weeklyData;
     },
     addEMA (config, data) {
@@ -154,7 +175,7 @@ var financeService = {
                     } else if (previousEMA > ema && previousMacdHistogram > macd.divergence) {
                         colour = 'red';
                     }
-                    dataPoint.impulse = { colour: colour }
+                    dataPoint.impulse = colour;
                 }
                 previousEMA = ema;
                 previousMacdHistogram = macd.divergence;
@@ -166,21 +187,33 @@ var financeService = {
     },
     addIndicators (data) {
 
-        data = this.addEMA(this.INDICATORS_CONFIG.shortEMA, data);
-        data = this.addEMA(this.INDICATORS_CONFIG.longEMA, data);
-        data = this.addEnveloppe(data);
-        data = this.addMACD(data);
-        data = this.addImpulseSystem(data);
+        for (let symbolData of data) {
+
+            symbolData.data = this.addEMA(this.INDICATORS_CONFIG.shortEMA, symbolData.data);
+            symbolData.data = this.addEMA(this.INDICATORS_CONFIG.longEMA, symbolData.data);
+            symbolData.data = this.addEnveloppe(symbolData.data);
+            symbolData.data = this.addMACD(symbolData.data);
+            symbolData.data = this.addImpulseSystem(symbolData.data);
+        }
 
         return data;
     },
-    getData () {
+    getData (symbols) {
         return new Promise((callback, errorCallback) => {
             try {
+
+                var symbolsString = '';
+                for (var index = 0; index < symbols.length; index++) {
+                    if (index > 0) {
+                        symbolsString += ',';
+                    }
+                    symbolsString += '"' + symbols[index] + '"';
+                }
+
                 https.get(
                     {
                         hostname: financeService.URL,
-                        path: financeService.buildPath('select * from yahoo.finance.historicaldata where symbol = "YHOO" and startDate = "2015-10-12" and endDate = "2016-04-12" | sort(field="Symbol", field="Date", descending="false")')
+                        path: financeService.buildPath(`select * from yahoo.finance.historicaldata where symbol IN (${symbolsString}) and startDate = "2015-10-12" and endDate = "2016-05-12" | sort(field="Symbol", field="Date", descending="false")`)
                     }, (response) => {
 
                         var allData = '';

@@ -21,7 +21,8 @@ server.get('/', (request, response) => {
 });
 
 server.get('/finance', (request, response) => {
-    financeService.getData().then(data => {
+    var symbols = [ "YHOO", 'AAPL', 'GOOGL' ];
+    financeService.getData(symbols).then(data => {
         var dailyData = financeService.formatData(data);
         var weeklyData = financeService.toWeeklyData(dailyData);
 

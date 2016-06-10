@@ -116,7 +116,6 @@
                         height: 200
                     },
                     impulseGraph: {
-                        height: 70
                     }
                 }
             }
@@ -124,6 +123,7 @@
 
         var algoBuilder = {
             getXScale: function (data) {
+                var domain = fc.util.extent().pad(0.1).fields(['date'])(data);
                 return fc.scale.dateTime()
                         .domain(fc.util.extent().pad(0.1).fields(['date'])(data))
                         .range([20, config.display.graph.width - 50]);
@@ -228,8 +228,8 @@
                     .append('svg')
                     .attr({'width': config.display.graph.width, 'height': config.display.graph.mainGraph.height});
 
-            var xScale = algoBuilder.getXScale(data);
-            var yScale = algoBuilder.getYScale(fc.util.extent().pad(0.2).fields(['high', 'low'])(data), [config.display.graph.mainGraph.height - 30, 20]);
+            var xScale = algoBuilder.getXScale(data.data);
+            var yScale = algoBuilder.getYScale(fc.util.extent().pad(0.2).fields(['high', 'low'])(data.data), [config.display.graph.mainGraph.height - 30, 20]);
 
             var candlestick = fc.series.candlestick();
             var gridlines = fc.annotation.gridline();
@@ -248,11 +248,11 @@
                 ['Long EMA :', function (dataPoint) { if (!dataPoint.datum[config.indicators.longEMA.name]) { return ''; } return formats.priceFormat(dataPoint.datum[config.indicators.longEMA.name]); }]
             ], 200, 100);
 
-            var crosshair = indicatorBuilder.getCrosshair(data, xScale, yScale, function (dataPoints) {
+            var crosshair = indicatorBuilder.getCrosshair(data.data, xScale, yScale, function (dataPoints) {
                 if (dataPoints.length > 0) {
                     tooltipLayout.position([dataPoints[0].x + config.display.crosshair.horizontalGap, dataPoints[0].y + config.display.crosshair.verticalGap]);
                     container
-                        .datum(data)
+                        .datum(data.data)
                         .call(multi);
                 }
             });
@@ -276,7 +276,7 @@
             indicatorBuilder.addYAxis(yScale, 5, config.display.graph.width - 40, container);
 
             container.append('g')
-                    .datum(data)
+                    .datum(data.data)
                     .call(multi);
         }
 
@@ -286,8 +286,8 @@
                     .append('svg')
                     .attr({'width': config.display.graph.width, 'height': config.display.graph.volumeGraph.height, "style": "padding: 20px 0;"});
 
-            var xScale = algoBuilder.getXScale(data);
-            var yScale = algoBuilder.getYScale([0, d3.max(data, function (dataPoint) { return dataPoint.volume; }) * 1.3], [config.display.graph.volumeGraph.height, 0]);
+            var xScale = algoBuilder.getXScale(data.data);
+            var yScale = algoBuilder.getYScale([0, d3.max(data.data, function (dataPoint) { return dataPoint.volume; }) * 1.3], [config.display.graph.volumeGraph.height, 0]);
 
             var volume = fc.series.bar()
                     .xValue(function (dataPoint) { return dataPoint.date; })
@@ -314,11 +314,11 @@
                 ['Volume :', function (dataPoint) { return formats.volumeFormat(dataPoint.datum.volume).replace(/,/g, ' '); }]
             ], 195, 40);
 
-            var crosshair = indicatorBuilder.getCrosshair(data, xScale, yScale, function (dataPoints) {
+            var crosshair = indicatorBuilder.getCrosshair(data.data, xScale, yScale, function (dataPoints) {
                 if (dataPoints.length > 0) {
                     tooltipLayout.position([dataPoints[0].x + config.display.crosshair.horizontalGap, dataPoints[0].y + config.display.crosshair.verticalGap]);
                     container
-                        .datum(data)
+                        .datum(data.data)
                         .call(multi);
                 }
             });
@@ -326,7 +326,7 @@
             var crosshairData = [];
 
             var multi = fc.series.multi()
-                    .series([gridlines, volume, crosshair, tooltipLayout])
+                    .series([gridlines, volume/*, crosshair, tooltipLayout*/])
                     .xScale(xScale)
                     .yScale(yScale)
                     .mapping(function(series) {
@@ -343,7 +343,7 @@
             indicatorBuilder.addYAxis(yScale, 4, config.display.graph.width - 50, container);
 
             container.append('g')
-                    .datum(data)
+                    .datum(data.data)
                     .call(multi);
         }
 
@@ -353,8 +353,8 @@
                     .append('svg')
                     .attr({'width': config.display.graph.width, 'height': config.display.graph.macdGraph.height, "style": "padding: 20px 0;"});
 
-            var xScale = algoBuilder.getXScale(data);
-            var yScale = algoBuilder.getYScale(fc.util.extent().fields([function(dataPoint) { return dataPoint.macd.macd; }]).symmetricalAbout(0)(data), [ config.display.graph.macdGraph.height, 0 ]);
+            var xScale = algoBuilder.getXScale(data.data);
+            var yScale = algoBuilder.getYScale(fc.util.extent().fields([function(dataPoint) { return dataPoint.macd.macd; }]).symmetricalAbout(0)(data.data), [ config.display.graph.macdGraph.height, 0 ]);
 
             var macd = indicatorBuilder.getMACD(xScale, yScale);
 
@@ -365,11 +365,11 @@
                 ['Divergence :', function (dataPoint) { return formats.priceFormat(dataPoint.datum.macd.divergence); }]
             ], 195, 80);
 
-            var crosshair = indicatorBuilder.getCrosshair(data, xScale, yScale, function (dataPoints) {
+            var crosshair = indicatorBuilder.getCrosshair(data.data, xScale, yScale, function (dataPoints) {
                 if (dataPoints.length > 0) {
                     tooltipLayout.position([dataPoints[0].x + config.display.crosshair.horizontalGap, dataPoints[0].y + config.display.crosshair.verticalGap]);
                     container
-                        .datum(data)
+                        .datum(data.data)
                         .call(multi);
                 }
             });
@@ -394,96 +394,153 @@
             indicatorBuilder.addYAxis(yScale, 4, config.display.graph.width - 50, container);
 
             container.append('g')
-                    .datum(data)
+                    .datum(data.data)
                     .call(multi);
         }
 
         function buildImpulse(selector, dailyData, weeklyData) {
 
-            var fullData = [];
+            function getSymbols (dailyData) {
+                var symbols = [];
+                for (let symbolData of dailyData) {
+                    symbols.push(symbolData.symbol);
+                }
+                return symbols;
+            }
 
-            var dailyIndex = 0;
-            var weeklyIndex = 0;
+            function addDaysToWeeklyData (dailyData, weeklyData) {
 
-            var nextWeeklyData = weeklyData[weeklyIndex];
-            var lastWeeklyDataInserted = null;
+                var fullData = [];
 
-            while (dailyIndex < dailyData.length) {
-                var currentDailyData = dailyData[dailyIndex];
+                for (let symbolDataIndex in weeklyData) {
 
-                if (nextWeeklyData && moment(currentDailyData.date).isSame(nextWeeklyData.date)) {
-                    lastWeeklyDataInserted = {
-                        date: nextWeeklyData.date,
-                        impulse: nextWeeklyData.impulse ? nextWeeklyData.impulse.colour : null,
-                        y: 2
-                    };
-                    weeklyIndex++;
-                    nextWeeklyData = weeklyIndex < weeklyData.length ? weeklyData[weeklyIndex] : null;
+                    var symbolWeeklyData = weeklyData[symbolDataIndex];
+                    var symbolDailyData = dailyData[symbolDataIndex];
+
+                    var symbolFullWeeklyData = [];
+                    fullData.push({ symbol:  symbolWeeklyData.symbol, data: symbolFullWeeklyData });
+
+                    var dailyIndex = 0;
+                    var weeklyIndex = 0;
+
+                    var nextWeeklyData = symbolWeeklyData.data[weeklyIndex];
+                    var lastWeeklyDataInserted = null;
+
+                    while (dailyIndex < symbolDailyData.data.length) {
+                        var currentDailyData = symbolDailyData.data[dailyIndex];
+
+                        if (nextWeeklyData && moment(currentDailyData.date).isSame(nextWeeklyData.date)) {
+                            lastWeeklyDataInserted = {
+                                date: nextWeeklyData.date,
+                                impulse: nextWeeklyData.impulse ? nextWeeklyData.impulse : null
+                            };
+                            weeklyIndex++;
+                            nextWeeklyData = weeklyIndex < symbolWeeklyData.data.length ? symbolWeeklyData.data[weeklyIndex] : null;
+                        }
+
+                        symbolFullWeeklyData.push({
+                            date: currentDailyData.date,
+                            weeklyImpulse: lastWeeklyDataInserted.impulse,
+                            dailyImpulse: currentDailyData.impulse ? currentDailyData.impulse : null
+                        });
+
+                        dailyIndex++;
+                    }
                 }
 
-                fullData.push({
-                    date: currentDailyData.date,
-                    weeklyImpulse: lastWeeklyDataInserted.impulse,
-                    dailyImpulse: currentDailyData.impulse ? currentDailyData.impulse.colour : null
-                });
-
-                dailyIndex++;
+                return fullData;
             }
+
+            function mergeData (fullData) {
+                var dataByDate = [];
+                for (let symbolData of fullData) {
+                    for (let symbolDataPoint of symbolData.data) {
+                        var dataPoint = dataByDate[symbolDataPoint.date];
+                        if (!dataPoint) {
+                            dataPoint = { date: symbolDataPoint.date, data: [] };
+                            dataByDate[symbolDataPoint.date] = dataPoint;
+                        }
+                        dataPoint.data[symbolData.symbol] = { dailyImpulse: symbolDataPoint.dailyImpulse, weeklyImpulse: symbolDataPoint.weeklyImpulse };
+                    }
+                }
+
+                var flattenedData = [];
+
+                for (let dateKey in dataByDate) {
+                    flattenedData.push( {
+                        date: new Date(dateKey),
+                        data: dataByDate[dateKey].data
+                    });
+                }
+
+                return flattenedData;
+            }
+
+            var fullData = addDaysToWeeklyData(dailyData, weeklyData);
+            var mergedData = mergeData(fullData);
+            var symbols = getSymbols(dailyData);
+            var height = (symbols.length * 40 + 20);
 
             var container = d3.select(selector)
                 .append('svg')
-                .attr({'width': config.display.graph.width, 'height': config.display.graph.impulseGraph.height, "style": "padding: 20px 0;"});
+                .attr({'width': config.display.graph.width, 'height': height, "style": "padding: 20px 20px 40px 0;"});
 
-            var xScale = algoBuilder.getXScale(fullData);
-            var yScale = algoBuilder.getYScale([ 0, 4 ], [ config.display.graph.impulseGraph.height, 0 ]);
+            var series = [];
+            var tooltipContent = [ ['Date : ', function (dataPoint) { return formats.dateFormat(dataPoint.datum.date); }] ];
+            for (let symbolIndex in symbols) {
 
-            var dailyPoint = fc.series.point()
-                    .xValue(function(dataPoint) { return dataPoint.date; })
-                    .yValue(function(dataPoint) { return dataPoint.dailyImpulse ? 1 : null; })
-                    .size(function() {
-                        return 40;
-                    })
-                    .type(function() {
-                        return 'square';
-                    })
-                    .decorate(function (g) {
-                        g
-                            .enter()
-                            .selectAll('.point > path')
-                            .style('fill', function (dataPoint) {
-                                return dataPoint.dailyImpulse;
-                            }).style('stroke', 'transparent');
-                    });
+                var weeklyPoint = fc.series.point()
+                        .xValue(function(dataPoint) { return dataPoint.date; })
+                        .yValue(function(dataPoint) { return dataPoint.data[symbols[symbolIndex]] && dataPoint.data[symbols[symbolIndex]].weeklyImpulse ? (symbols.length - Number.parseInt(symbolIndex) - 0.5) : null; })
+                        .size(function() {
+                            return 40;
+                        })
+                        .type(function() {
+                            return 'square';
+                        })
+                        .decorate(function (g) {
+                            g
+                                .enter()
+                                .selectAll('.point > path')
+                                .style('fill', function (dataPoint) {
+                                    return dataPoint.data[symbols[symbolIndex]].weeklyImpulse;
+                                }).style('stroke', 'transparent');
+                        });
+                series.push(weeklyPoint);
 
-            var weeklyPoint = fc.series.point()
-                    .xValue(function(dataPoint) { return dataPoint.date; })
-                    .yValue(function(dataPoint) { return dataPoint.weeklyImpulse ? 2 : null; })
-                    .size(function() {
-                        return 40;
-                    })
-                    .type(function() {
-                        return 'square';
-                    })
-                    .decorate(function (g) {
-                        g
-                            .enter()
-                            .selectAll('.point > path')
-                            .style('fill', function (dataPoint) {
-                                return dataPoint.weeklyImpulse;
-                            }).style('stroke', 'transparent');
-                    });
+                var dailyPoint = fc.series.point()
+                        .xValue(function(dataPoint) { return dataPoint.date; })
+                        .yValue(function(dataPoint) { return dataPoint.data[symbols[symbolIndex]] && dataPoint.data[symbols[symbolIndex]].dailyImpulse ? (symbols.length - Number.parseInt(symbolIndex) - 0.8): null; })
+                        .size(function() {
+                            return 40;
+                        })
+                        .type(function() {
+                            return 'square';
+                        })
+                        .decorate(function (g) {
+                            g
+                                .enter()
+                                .selectAll('.point > path')
+                                .style('fill', function (dataPoint) {
+                                    return dataPoint.data[symbols[symbolIndex]].dailyImpulse;
+                                }).style('stroke', 'transparent');
+                        });
+                series.push(dailyPoint);
 
-            var tooltipLayout = indicatorBuilder.getTooltip([
-                ['Date : ', function (dataPoint) { return formats.dateFormat(dataPoint.datum.date); }],
-                ['Weekly Impulse : ', function (dataPoint) { return dataPoint.datum.weeklyImpulse; }],
-                ['Daily Impulse : ', function (dataPoint) { return dataPoint.datum.dailyImpulse; }]
-            ], 220, 50);
+                tooltipContent.push([`Weekly ${symbols[symbolIndex]} : `, function (dataPoint) { return dataPoint.datum.data[symbols[symbolIndex]] && dataPoint.datum.data[symbols[symbolIndex]].weeklyImpulse ? dataPoint.datum.data[symbols[symbolIndex]].weeklyImpulse : ''; }]);
+                tooltipContent.push([`Daily ${symbols[symbolIndex]} : `, function (dataPoint) { return dataPoint.datum.data[symbols[symbolIndex]] && dataPoint.datum.data[symbols[symbolIndex]].dailyImpulse ? dataPoint.datum.data[symbols[symbolIndex]].dailyImpulse : ''; }]);
+            }
 
-            var crosshair = indicatorBuilder.getCrosshair(fullData, xScale, yScale, function (dataPoints) {
+            var xScale = algoBuilder.getXScale(mergedData);
+            var yScale = algoBuilder.getYScale([ - 1, (symbols.length + 1) ], [ height, 0 ]);
+
+            var tooltipLayout = indicatorBuilder.getTooltip(tooltipContent, 220, 20 + ( symbols.length * 40 ));
+
+            var crosshair = indicatorBuilder.getCrosshair(mergedData, xScale, yScale, function (dataPoints) {
                 if (dataPoints.length > 0) {
-                    tooltipLayout.position([dataPoints[0].x + config.display.crosshair.horizontalGap, dataPoints[0].y + config.display.crosshair.verticalGap]);
+                    tooltipLayout.position([dataPoints[0].x - 240, dataPoints[0].y - config.display.crosshair.verticalGap]);
                     container
-                        .datum(fullData)
+                        .datum(mergedData)
                         .call(multi);
                 }
             });
@@ -491,7 +548,7 @@
             var crosshairData = [];
 
             var multi = fc.series.multi()
-                .series([ dailyPoint, weeklyPoint, crosshair, tooltipLayout ])
+                .series(series.concat([ crosshair, tooltipLayout ]))
                 .xScale(xScale)
                 .yScale(yScale)
                 .mapping(function(series) {
@@ -504,34 +561,67 @@
                     }
                 });
 
-            indicatorBuilder.addXAxis(xScale, config.display.graph.impulseGraph.height, container);
+            indicatorBuilder.addXAxis(xScale, height, container);
+
+            var tickValues = [];
+            for (let symbolIndex in symbols) {
+                tickValues.push((parseInt(symbolIndex) + 0.4));
+            }
+
+            var axis = fc.svg.axis()
+                    .scale(yScale)
+                    .tickValues(tickValues)
+                    .decorate(function (s) {
+                        s
+                            .enter()
+                            .select('text')
+                            .text(function(dataPoint, index) { return symbols[symbols.length - index - 1]; })
+                            .attr('symbol-index', function (dataPoint, index) { return (symbols.length - index - 1); });
+                    })
+                    .orient('right');
 
             container.append('g')
-                    .datum(fullData)
+                    .attr('class', 'axis')
+                    .attr('transform', 'translate(' + (config.display.graph.width - 50) + ', 0)')
+                    .call(axis);
+
+            container.append('g')
+                    .datum(mergedData)
                     .call(multi);
+
+            d3.selectAll('[symbol-index]').on('click', function () {
+                var symbolIndex = parseInt(d3.select(this).attr('symbol-index'));
+
+                var symboDailyData = dailyData[symbolIndex];
+
+                buildMainChart('#daily-multi', symboDailyData);
+                buildVolume('#daily-volume', symboDailyData);
+                buildMACD('#daily-macd', symboDailyData);
+
+                var symboWeeklylData = weeklyData[symbolIndex];
+
+                buildMainChart('#weekly-multi', symboWeeklylData);
+                buildVolume('#weekly-volume', symboWeeklylData);
+                buildMACD('#weekly-macd', symboWeeklylData);
+            });
         }
 
         var dailyData = JSON.parse('{{{this.dailyDataString}}}');
-        for(let piece of dailyData) {
-            piece.date = new Date(piece.date);
+        var weeklyData = JSON.parse('{{{this.weeklyDataString}}}');
+
+        for (let symbolData of dailyData) {
+            for (let dataPoint of symbolData.data) {
+                dataPoint.date = new Date(dataPoint.date);
+            }
         }
 
-        buildMainChart('#daily-multi', dailyData);
-        buildVolume('#daily-volume', dailyData);
-        buildMACD('#daily-macd', dailyData);
-
-
-
-        var weeklyData = JSON.parse('{{{this.weeklyDataString}}}');
-        for(let piece of weeklyData) {
-            piece.date = new Date(piece.date);
+        for (let symbolData of weeklyData) {
+            for (let dataPoint of symbolData.data) {
+                dataPoint.date = new Date(dataPoint.date);
+            }
         }
 
         buildImpulse('#impulse-multi', dailyData, weeklyData);
-        buildMainChart('#weekly-multi', weeklyData);
-        buildVolume('#weekly-volume', weeklyData);
-        buildMACD('#weekly-macd', weeklyData);
-        //END
 
     </script>
 </html>
